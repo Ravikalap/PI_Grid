@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>PI_Grid</title>
+
+    <script type="text/javascript" src="/apps/2.0rc1/sdk.js"></script>
+
+    <script type="text/javascript">
+        Rally.onReady(function () {
+                Ext.define("CustomApp",{extend:"Rally.app.App",componentCls:"app",launch:function(){var myFilter,parentFilter=Ext.create("Rally.data.QueryFilter",{property:"Parent",operator:"=",value:"null"}),timeboxScope=this.getContext().getTimeboxScope();timeboxScope?(console.log("Timebox query: ",timeboxScope.getQueryFilter()),myFilter="iteration"===timeboxScope.getType()?parentFilter:parentFilter.and(timeboxScope.getQueryFilter())):myFilter=parentFilter,Rally.data.ModelFactory.getModel({type:"PortfolioItem/Feature",success:function(model){this.grid=this.add({xtype:"rallygrid",model:model,columnCfgs:["FormattedID","Name","Owner","State","Release"],storeConfig:{filters:[myFilter]}})},scope:this})},onTimeboxScopeChange:function(newTimeboxScope){this.callParent(arguments),console.log("Timebox Changed called");var parentFilter=Ext.create("Rally.data.QueryFilter",{property:"Parent",operator:"=",value:"null"}),newFilter=parentFilter.and(newTimeboxScope.getQueryFilter()),store=this.grid.getStore();store.clearFilter(!0),store.filter(newFilter)}});
+
+            Rally.launchApp('CustomApp', {
+                name:"PI_Grid",
+	            parentRepos:""
+            });
+
+        });
+    </script>
+
+
+    <style type="text/css">
+        .app {
+     /* Add app styles here */
+}
+
+    </style>
+</head>
+<body></body>
+</html>
