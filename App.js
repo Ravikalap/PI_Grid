@@ -76,6 +76,7 @@ Ext.define('CustomApp', {
             if(length === 0) { lastRecord = true; }
             gridRecord = {
                 _ref: record.get('_ref'),
+                _type: Rally.util.Ref.getTypeFromRef(record),
                 ObjectID: record.get('ObjectID'),
                 FormattedID: record.get('FormattedID'),
                 Release: record.get('Release'),
@@ -186,18 +187,13 @@ Ext.define('CustomApp', {
                 },
                 {
                     xtype: 'templatecolumn',
-                    text: 'Parent ID',
+                    text: 'Parent',
                     dataIndex: 'Parent',
-                    renderer: this.renderID,
-                    tpl: Ext.create('Rally.ui.renderer.template.FormattedIDTemplate')
+                    tpl: Ext.create('Rally.ui.renderer.template.ParentTemplate'),
+                    flex: 2
                         
                 },
                 {
-                    text: 'Parent',
-                    dataIndex: 'Parent',
-                    renderer: this.renderName
-                },
-                                {
                     xtype: 'templatecolumn',
                     text: 'Grandparent ID',
                     dataIndex: 'Grandparent',
