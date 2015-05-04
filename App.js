@@ -160,9 +160,7 @@ Ext.define('CustomApp', {
     },
     
     renderParent: function(value, meta, rec, row, col ) {
-        var name = value.FormattedID + " " + value.Name;
-        console.log("parent name: ", name );
-        return name;
+        return value.name;
     }, 
     
     _createGrid: function(gridRecords) {
@@ -186,23 +184,31 @@ Ext.define('CustomApp', {
                     renderer: this.renderName,
                     flex: 1
                 },
-                /*{
-                        text: 'Parent ID',
-                        dataIndex: 'Parent',
-                        renderer: this.renderID,
-                        tpl: Ext.create('Rally.ui.renderer.template.FormattedIDTemplate')
+                {
+                    xtype: 'templatecolumn',
+                    text: 'Parent ID',
+                    dataIndex: 'Parent',
+                    renderer: this.renderID,
+                    tpl: Ext.create('Rally.ui.renderer.template.FormattedIDTemplate')
                         
-                },*/
+                },
                 {
                     text: 'Parent',
                     dataIndex: 'Parent',
-                    renderer: this.renderParent,
-                    tpl: Ext.create('Rally.ui.renderer.template.ParentTemplate')
+                    renderer: this.renderName
+                },
+                                {
+                    xtype: 'templatecolumn',
+                    text: 'Grandparent ID',
+                    dataIndex: 'Grandparent',
+                    renderer: this.renderID,
+                    tpl: Ext.create('Rally.ui.renderer.template.FormattedIDTemplate')
+                        
                 },
                 {
                     text: 'Grandparent',
                     dataIndex: 'Grandparent',
-                    renderer: this.renderParent,
+                    renderer: this.renderName,
                     flex: 2
                 }
             ],
