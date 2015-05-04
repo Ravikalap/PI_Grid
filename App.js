@@ -52,11 +52,10 @@ Ext.define('CustomApp', {
             model: 'PortfolioItem/Feature',
             autoLoad: true,
             filters: this._getFilter(),
-            projectScopeDown: true,
+            context: this.getContext().getDataContext(),
             remoteSort: false,
             listeners: {
                 load: function(store, records, success) {
-                    console.log( "loaded records: ",  records);
                     this._getGrandparents(records);
                 },
                 scope: this
@@ -65,7 +64,6 @@ Ext.define('CustomApp', {
                 "Parent"]
         });
     },
-    
 
     _getGrandparents: function(data) {
         var me = this;
@@ -118,12 +116,14 @@ Ext.define('CustomApp', {
        Ext.Array.each(resultsData, function(record) {
             gp = record.get('Parent');
         });
+        
         if ( gp ) {
             currentRec.Grandparent = gp;
         }
         if( lastRecord ) {
             me._createGrid(resultsData);
         }
+        console.log("grid data: ", currentRec);
     },
     
     _getFilter: function() {
@@ -136,8 +136,6 @@ Ext.define('CustomApp', {
         
         var releaseFilter = combo.getQueryFromSelected();
         var filter = releaseFilter.and(execFilter);
-        console.log("filter: ", filter.toString());
-            
         return filter;
     },
     
@@ -156,6 +154,9 @@ Ext.define('CustomApp', {
     
     renderName : function(value,meta,rec,row,col) {
         return value ? value.Name : value;
+    },
+    renderID : function(value, meta, rec, row, col) {
+        return value ? value.FormattedID : value;
     },
     
     renderParent: function(value, meta, rec, row, col ) {
@@ -185,15 +186,23 @@ Ext.define('CustomApp', {
                     renderer: this.renderName,
                     flex: 1
                 },
+                /*{
+                        text: 'Parent ID',
+                        dataIndex: 'Parent',
+                        renderer: this.renderID,
+                        tpl: Ext.create('Rally.ui.renderer.template.FormattedIDTemplate')
+                        
+                },*/
                 {
                     text: 'Parent',
                     dataIndex: 'Parent',
-                    renderer: this.renderParent
+                    renderer: this.renderParent,
+                    tpl: Ext.create('Rally.ui.renderer.template.ParentTemplate')
                 },
                 {
                     text: 'Grandparent',
                     dataIndex: 'Grandparent',
-                    renderer: this.renderName,
+                    renderer: this.renderParent,
                     flex: 2
                 }
             ],
