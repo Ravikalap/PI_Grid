@@ -122,7 +122,7 @@ Ext.define('CustomApp', {
             currentRec.Grandparent = gp;
         }
         if( lastRecord ) {
-            me._createGrid(resultsData);
+            me._createGrid();
         }
         console.log("grid data: ", currentRec);
     },
@@ -164,7 +164,7 @@ Ext.define('CustomApp', {
         return value.name;
     }, 
     
-    _createGrid: function(gridRecords) {
+    _createGrid: function() {
         this._myGrid = this.add({
             xtype: 'rallygrid',
             columnCfgs: [
@@ -195,16 +195,12 @@ Ext.define('CustomApp', {
                 },
                 {
                     xtype: 'templatecolumn',
-                    text: 'Grandparent ID',
-                    dataIndex: 'Grandparent',
-                    renderer: this.renderID,
-                    tpl: Ext.create('Rally.ui.renderer.template.FormattedIDTemplate')
-                        
-                },
-                {
                     text: 'Grandparent',
                     dataIndex: 'Grandparent',
-                    renderer: this.renderName,
+                    tpl: Ext.create('Rally.ui.renderer.template.ChildObjectFormattedIDTemplate', {
+                        showName: true,
+                        childObjectProperty: 'Grandparent'
+                    }),
                     flex: 2
                 }
             ],
