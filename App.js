@@ -68,12 +68,51 @@ Ext.define('CustomApp', {
     _getGrandparents: function(data) {
         var me = this;
         var gridRecord = [];
-        var lastRecord = false;
-        var length = data.length;
-
-        Ext.Array.each(data, function(record) {
-            length--;
-            if(length === 0) { lastRecord = true; }
+        async.forEach(data, function(record, callback) {
+        console.log('Processing record ' + record);
+        gridRecord = {
+                _ref: record.get('_ref'),
+                _type: Rally.util.Ref.getTypeFromRef(record),
+                ObjectID: record.get('ObjectID'),
+                FormattedID: record.get('FormattedID'),
+                Release: record.get('Release'),
+                Name: record.get('Name'),
+                Parent: record.get('Parent'),
+                Grandparent: 0
+            };
+            if( record.get('Parent')) {
+                Ext.create('Rally.data.WsapiDataStore', {
+                    model: 'PortfolioItem/Initiative',
+                    autoLoad: true,
+                    filters: [{
+                        property : 'Name',
+                        operator : '=',
+                        value    : parent.Name
+                    }],
+                    fetch: ['Name', 'Parent', 'FormattedID', '_ref'],
+                    listeners: {
+                        load: function(store, data, success) {
+                            me._onInitiativesLoaded(data, gridRecord);
+                        },
+                        scope: this
+                    }
+                }); 
+            }
+            me._GridRecords.push(gridRecord);
+        callback();
+        }, function(err){
+            // if any of the processing produced an error, err would equal that error
+            if( err ) {
+              // One of the iterations produced an error.
+              // All processing will now stop.
+              console.log('A record failed to process');
+            } else {
+              console.log('All records have been processed successfully', me._GridRecords);
+              me._createGrid();
+            }
+        });
+        
+       /* Ext.Array.each(data, function(record) {
             gridRecord = {
                 _ref: record.get('_ref'),
                 _type: Rally.util.Ref.getTypeFromRef(record),
@@ -84,12 +123,15 @@ Ext.define('CustomApp', {
                 Parent: record.get('Parent'),
                 Grandparent: 0
             };
-            me._setGrandparent(gridRecord, lastRecord);
+            if( record.get('Parent')) {
+                me._setGrandparent(gridRecord);
+            }
             me._GridRecords.push(gridRecord);
         });
+        this._createGrid();*/
     },
     
-    _setGrandparent: function (gridRecord, lastRecord) {
+    _setGrandparent: function (gridRecord) {
         var parent = gridRecord.Parent;
         if ( parent ) {
             Ext.create('Rally.data.WsapiDataStore', {
@@ -103,7 +145,7 @@ Ext.define('CustomApp', {
                 fetch: ['Name', 'Parent', 'FormattedID', '_ref'],
                 listeners: {
                     load: function(store, data, success) {
-                        this._onInitiativesLoaded(data, gridRecord, lastRecord);
+                        this._onInitiativesLoaded(data, gridRecord);
                     },
                     scope: this
                 }
@@ -111,20 +153,15 @@ Ext.define('CustomApp', {
         }
     },
     
-    _onInitiativesLoaded: function(resultsData, currentRec, lastRecord) {
-        var me = this;
+    _onInitiativesLoaded: function(resultsData, currentRec) {
         var gp;
-       Ext.Array.each(resultsData, function(record) {
+        Ext.Array.each(resultsData, function(record) {
             gp = record.get('Parent');
         });
         
         if ( gp ) {
             currentRec.Grandparent = gp;
         }
-        if( lastRecord ) {
-            me._createGrid();
-        }
-        console.log("grid data: ", currentRec);
     },
     
     _getFilter: function() {
