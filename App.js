@@ -9,13 +9,38 @@ Ext.define('CustomApp', {
     componentCls: 'app',
 
     launch: function() {
+        app = this;       
+        var that = this;
         this._GridRecords = [];
         this._boxcontainer = Ext.create('Ext.form.Panel', {
             layout: { type: 'hbox'},
             width: '95%',
             bodyPadding: 10
         });
-        this._loadReleases();
+        this._loadPortfolioItemTypes(function(){
+            console.log(app.piTypes);
+            that._loadReleases();    
+        });
+        
+    },
+
+    _loadPortfolioItemTypes : function(callback) {
+
+        var piStore = Ext.create("Rally.data.WsapiDataStore", {
+            model: 'TypeDefinition',
+            autoLoad: true,
+            fetch : true,
+            filters: [ { property:"Ordinal", operator:"!=", value:-1} ],
+            listeners: {
+                load: function(store, records, success) {
+                    // console.log("pi record types",records);
+                    app.piTypes = _.map(records,function(r){ return r.get("TypePath")});
+                    callback();
+                },
+                scope: this
+            },
+        });
+
     },
     
     _loadReleases: function() {
@@ -49,32 +74,42 @@ Ext.define('CustomApp', {
 
     _loadFeatures: function() {
         var me = this;
+        // console.log(this._getFilter().toString());
         this._myStore = Ext.create("Rally.data.WsapiDataStore", {
-            model: 'PortfolioItem/Feature',
+            // model: 'PortfolioItem/Feature',
+            model : app.piTypes[0],
             autoLoad: true,
             filters: this._getFilter(),
             context: this.getContext().getDataContext(),
             remoteSort: false,
             listeners: {
                 load: function(store, records, success) {
+                    // console.log("records",records);
+                    // this._getGrandparents(records);
+                    // barry starts here
                     me._GridRecords = records;
                     me._createGrid();
-                    this._getGrandParents(records);
+                    this.__getGrandParents(records);
+                    // barry ends here
                 },
                 scope: this
             },
-            fetch: ["Name", "FormattedID", "CustomField1", 'Release', "Parent"]
+            fetch: ["Name", "FormattedID", "CustomField1", 'Release', 
+                "Parent"]
         });
     },
 
-    _getGrandParents : function( features ) {
+    __getGrandParents : function( features ) {
+
+        // console.log("get grandparents",features);
 
         async.map( features, 
 
             function(feature, callback) {
                 if ( feature.get('Parent')) {
                     Ext.create('Rally.data.WsapiDataStore', {
-                        model: 'PortfolioItem/Initiative',
+                        // model: 'PortfolioItem/Initiative',
+                        model : app.piTypes[1],
                         autoLoad: true,
                         filters: [{
                             property : 'FormattedID',
@@ -84,7 +119,9 @@ Ext.define('CustomApp', {
                         fetch: ['Name', 'Parent', 'FormattedID', '_ref','ObjectID'],
                         listeners: {
                             load: function(store, data, success) {
-                                //console.log(_.first(data).get("Parent"));
+                                // me._onInitiativesLoaded(data, gridRecord);
+                                // console.log(_.first(data).get("Parent"));
+
                                 callback(null,_.first(data).get("Parent"));
                             },
                             scope: this
@@ -95,13 +132,103 @@ Ext.define('CustomApp', {
                 }
             },
             function(err,results){
-                //console.log("grandparent results",results);
+                // console.log("grandparent results",results);
                 _.each(features,function(feature,i) {
-                    feature.set("Grandparent",results[i]);
-                });
+                    feature.set("Grandparent",results[i])
+                })
             }
-        );
+        )
 
+    },
+
+    _getGrandparents: function(data) {
+        var me = this;
+        var gridRecord = [];
+        async.forEach(data, function(record, callback) {
+        // console.log('Processing record ' + record);
+        gridRecord = {
+                _ref: record.get('_ref'),
+                _type: Rally.util.Ref.getTypeFromRef(record),
+                ObjectID: record.get('ObjectID'),
+                FormattedID: record.get('FormattedID'),
+                Release: record.get('Release'),
+                Name: record.get('Name'),
+                Parent: record.get('Parent'),
+                Grandparent: 0
+            };
+            if( record.get('Parent')) {
+                Ext.create('Rally.data.WsapiDataStore', {
+                    // model: 'PortfolioItem/Initiative',
+                    model : app.piTypes[1],
+                    autoLoad: true,
+                    filters: [{
+                        property : 'Name',
+                        operator : '=',
+                        value    : parent.Name
+                    }],
+                    fetch: ['Name', 'Parent', 'FormattedID', '_ref'],
+                    listeners: {
+                        load: function(store, data, success) {
+                            me._onInitiativesLoaded(data, gridRecord);
+                        },
+                        scope: this
+                    }
+                }); 
+            }
+            me._GridRecords.push(gridRecord);
+        callback();
+        }, function(err){
+            // if any of the processing produced an error, err would equal that error
+            if( err ) {
+              // One of the iterations produced an error.
+              // All processing will now stop.
+              console.log('A record failed to process');
+            } else {
+              console.log('All records have been processed successfully', me._GridRecords);
+              me._createGrid();
+            }
+        });
+        
+       /* Ext.Array.each(data, function(record) {
+            gridRecord = {
+                _ref: record.get('_ref'),
+                _type: Rally.util.Ref.getTypeFromRef(record),
+                ObjectID: record.get('ObjectID'),
+                FormattedID: record.get('FormattedID'),
+                Release: record.get('Release'),
+                Name: record.get('Name'),
+                Parent: record.get('Parent'),
+                Grandparent: 0
+            };
+            if( record.get('Parent')) {
+                me._setGrandparent(gridRecord);
+            }
+            me._GridRecords.push(gridRecord);
+        });
+        this._createGrid();*/
+    },
+    
+    _setGrandparent: function (gridRecord) {
+        var parent = gridRecord.Parent;
+        if ( parent ) {
+            Ext.create('Rally.data.WsapiDataStore', {
+                // model: 'PortfolioItem/Initiative',
+                model : app.piTypes[1],
+                autoLoad: true,
+                filters: [{
+                    property : 'Name',
+                    operator : '=',
+                    value    : parent.Name
+                }],
+                fetch: ['Name', 'Parent', 'FormattedID', '_ref'],
+                listeners: {
+                    load: function(store, data, success) {
+                        this._onInitiativesLoaded(data, gridRecord);
+                    },
+                    scope: this
+                }
+            }); 
+        }
     },
     
     _onInitiativesLoaded: function(resultsData, currentRec) {
@@ -125,7 +252,8 @@ Ext.define('CustomApp', {
         
         var releaseFilter = combo.getQueryFromSelected();
         var filter = releaseFilter.and(execFilter);
-        return filter;
+        // return filter;
+        return releaseFilter;
     },
     
     _onReleaseComboboxChanged: function() {
@@ -136,6 +264,9 @@ Ext.define('CustomApp', {
             this._GridRecords = [];
             this._loadFeatures();
         }
+        else {
+            console.log("grid not created yet");
+        }
     },
     
     renderName : function(value,meta,rec,row,col) {
@@ -144,9 +275,13 @@ Ext.define('CustomApp', {
     renderID : function(value, meta, rec, row, col) {
         return value ? value.FormattedID : value;
     },
-
+    
+    renderParent: function(value, meta, rec, row, col ) {
+        return value.name;
+    }, 
+    
     _createGrid: function() {
-        //console.log("grid records",this._GridRecords);
+        console.log("grid records",this._GridRecords);
         this._myGrid = this.add({
             xtype: 'rallygrid',
             columnCfgs: [
@@ -190,7 +325,8 @@ Ext.define('CustomApp', {
             context: this.getContext(),
             store: Ext.create('Rally.data.custom.Store', {
              data: this._GridRecords,
-             model: 'PortfolioItem/Feature',
+             // model: 'PortfolioItem/Feature',
+             model : app.piTypes[0],
              height: '98%'
             })
         });
