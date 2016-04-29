@@ -53,6 +53,8 @@ Ext.define("GridExporter", {
         var store   = grid.store;
         var data    = '';
 
+        console.log("cols",cols);
+        console.log("store items",grid.store.data.items);
         var that = this;
         Ext.Array.each(cols, function(col, index) {
             if (col.hidden !== true) {
@@ -61,12 +63,14 @@ Ext.define("GridExporter", {
         });
         data += "\n";
 
-        store.each(function(record) {
-            var entry       = record.getData();
+        Ext.Array.each(grid.store.data.items,function(record) {
+        // store.each(function(record) {
+            var entry       = record; //.getData();
+            console.log("entry",entry);
             Ext.Array.each(cols, function(col, index) {
                 if (col.hidden !== true) {
                     var fieldName   = col.dataIndex;
-                    var text        = entry[fieldName];
+                    var text        = entry.get(fieldName); // entry[fieldName];
 
                     data += that._getFieldTextAndEscape(text) + ',';
                 }
