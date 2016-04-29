@@ -117,22 +117,27 @@ Ext.define('CustomApp', {
 
             function(feature, callback) {
                 if ( feature.get('Parent')) {
+                    // console.log("parent",feature.get('Parent'));
                     Ext.create('Rally.data.WsapiDataStore', {
                         // model: 'PortfolioItem/Initiative',
                         model : app.piTypes[1],
                         autoLoad: true,
                         filters: [{
-                            property : 'FormattedID',
+                            // property : 'FormattedID',
+                            // operator : '=',
+                            // value    : feature.get('Parent')["FormattedID"]
+                            property : 'ObjectID',
                             operator : '=',
-                            value    : feature.get('Parent')["FormattedID"]
+                            value    : Rally.util.Ref.getOidFromRef(feature.get('Parent'))
+
                         }],
                         fetch: ['Name', 'Parent', 'FormattedID', '_ref','ObjectID'],
                         listeners: {
                             load: function(store, data, success) {
                                 // me._onInitiativesLoaded(data, gridRecord);
                                 // console.log(_.first(data).get("Parent"));
-
-                                callback(null,_.first(data).get("Parent"));
+                                // console.log("data",data);
+                                callback(null, data.length > 0 ?_.first(data).get("Parent") : null);
                             },
                             scope: this
                         }
