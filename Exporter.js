@@ -28,7 +28,8 @@ Ext.define("GridExporter", {
             text = '';
             
         } else if (fieldData._refObjectName && !fieldData.getMonth) {
-            text = fieldData._refObjectName;
+            text = _.isUndefined(fieldData.FormattedID) ? fieldData._refObjectName : 
+                fieldData.FormattedID + ":" + fieldData._refObjectName;
 
         } else if (fieldData instanceof Date) {
             text = Ext.Date.format(fieldData, this.dateFormat);
