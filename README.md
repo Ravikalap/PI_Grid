@@ -2,9 +2,8 @@ PI_Grid
 =========================
 
 ## Overview
-This grid displays PI Features and it's parentage, filters by release and has
-an export to CSV button. Assumes the first order PI is a Feature, parent is an
-Initiative, grandparent doesn't matter. Only shows the first 3 levels
+This grid displays a first order portfolio item and it's parentage, filters by release and has
+an export to CSV button.  Only shows the first 3 levels of the portfolio hierarchy
 
 ## Screen Shot
 ![PI_Grid](https://github.com/sficarrotta/PI_Grid/blob/master/PI_Grid.png)
